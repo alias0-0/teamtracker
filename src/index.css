@@ -1,0 +1,36 @@
+@import 'tailwindcss';
+
+:root {
+  --background: 250 20% 4%;
+  --foreground: 210 40% 96%;
+  --card: 250 15% 8%;
+  --border: 250 12% 18%;
+  --primary: 152 76% 40%;
+  --muted-fg: 215 20% 65%;
+}
+
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: 'Inter', system-ui, sans-serif;
+  min-height: 100vh;
+  background-image: radial-gradient(ellipse at top, hsl(var(--primary) / 0.05) 0%, transparent 60%);
+}
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-border: hsl(var(--border));
+  --color-primary: hsl(var(--primary));
+  --color-muted-foreground: hsl(var(--muted-fg));
+}
+
+.glass {
+  background: hsl(var(--card) / 0.6);
+  backdrop-filter: blur(20px);
+  border: 1px solid hsl(var(--border));
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 4px; }
