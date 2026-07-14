@@ -1,0 +1,27 @@
+@import 'tailwindcss';
+
+:root {
+  --accent: 217 91% 40%;      /* deep blue */
+  --bg: 0 0% 100%;
+  --fg: 222 20% 15%;
+  --muted: 220 14% 46%;
+  --border: 220 14% 88%;
+  --surface: 220 20% 98%;
+  --danger: 0 72% 45%;
+}
+
+body {
+  background: hsl(var(--bg));
+  color: hsl(var(--fg));
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+@theme inline {
+  --color-accent: hsl(var(--accent));
+  --color-bg: hsl(var(--bg));
+  --color-fg: hsl(var(--fg));
+  --color-muted: hsl(var(--muted));
+  --color-border: hsl(var(--border));
+  --color-surface: hsl(var(--surface));
+  --color-danger: hsl(var(--danger));
+}
