@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { GoogleMap, Marker, InfoWindow, useLoadScript } from '@react-google-maps/api';
 import type { ActiveEmployee } from '@/lib/use-employees';
+import { useReverseGeocode } from '@/lib/use-reverse-geocode';
 
 const AL_KHOBAR = { lat: 26.2794, lng: 50.2083 };
 
@@ -8,6 +9,47 @@ interface Props {
   employees: ActiveEmployee[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+}
+
+function EmployeeMarker({
+  e,
+  isOpen,
+  onOpen,
+  onClose,
+  onSelect,
+}: {
+  e: ActiveEmployee;
+  isOpen: boolean;
+  onOpen: () => void;
+  onClose: () => void;
+  onSelect: (id: string) => void;
+}) {
+  const address = useReverseGeocode(e.lat, e.lng);
+
+  return (
+    <Marker
+      position={{ lat: e.lat!, lng: e.lng! }}
+      onClick={() => {
+        onSelect(e.id);
+        onOpen();
+      }}
+    >
+      {isOpen && (
+        <InfoWindow onCloseClick={onClose}>
+          <div className="text-sm">
+            <div className="font-semibold">{e.name}</div>
+            <div className="text-gray-600">{e.mobile}</div>
+            <div className="text-gray-600">{e.dept}</div>
+            <div className="text-gray-600">Assigned: {e.zone_name ?? 'None'}</div>
+            <div className="text-gray-600">Currently at: {address ?? 'Locating…'}</div>
+            <div className="mt-1 text-xs text-gray-400">
+              Updated {e.recorded_at ? new Date(e.recorded_at).toLocaleTimeString() : '—'}
+            </div>
+          </div>
+        </InfoWindow>
+      )}
+    </Marker>
+  );
 }
 
 export function LiveMap({ employees, selectedId, onSelect }: Props) {
@@ -49,28 +91,14 @@ export function LiveMap({ employees, selectedId, onSelect }: Props) {
       onLoad={(map) => { mapRef.current = map; }}
     >
       {withLocation.map((e) => (
-        <Marker
+        <EmployeeMarker
           key={e.id}
-          position={{ lat: e.lat!, lng: e.lng! }}
-          onClick={() => {
-            onSelect(e.id);
-            setActiveInfoId(e.id);
-          }}
-        >
-          {activeInfoId === e.id && (
-            <InfoWindow onCloseClick={() => setActiveInfoId(null)}>
-              <div className="text-sm">
-                <div className="font-semibold">{e.name}</div>
-                <div className="text-gray-600">{e.mobile}</div>
-                <div className="text-gray-600">{e.dept}</div>
-                <div className="text-gray-600">{e.zone_name}</div>
-                <div className="mt-1 text-xs text-gray-400">
-                  Updated {e.recorded_at ? new Date(e.recorded_at).toLocaleTimeString() : '—'}
-                </div>
-              </div>
-            </InfoWindow>
-          )}
-        </Marker>
+          e={e}
+          isOpen={activeInfoId === e.id}
+          onOpen={() => setActiveInfoId(e.id)}
+          onClose={() => setActiveInfoId(null)}
+          onSelect={onSelect}
+        />
       ))}
     </GoogleMap>
   );

@@ -21,7 +21,7 @@ export function HomeScreen() {
       const { data } = await supabase.from('shifts').select('id').is('ended_at', null).maybeSingle();
       const id = (data?.id as string | undefined) ?? null;
       setShiftId(id);
-      if (id && profile) setActiveContext(profile.id, id);
+      if (id && profile) await setActiveContext(profile.id, id);
     })();
   }, [profile]);
 
@@ -48,7 +48,7 @@ export function HomeScreen() {
       const { data, error: rpcError } = await supabase.rpc('start_shift');
       if (rpcError) throw rpcError;
       const newShiftId = data as unknown as string;
-      setActiveContext(profile.id, newShiftId);
+      await setActiveContext(profile.id, newShiftId);
       await startLocationTracking();
       setShiftId(newShiftId);
     } catch (e) {

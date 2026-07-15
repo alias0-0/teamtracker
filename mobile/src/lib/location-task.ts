@@ -1,10 +1,13 @@
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
 
 export const LOCATION_TASK = 'team-tracker-location-task';
 
-// Defined once at module load — required by expo-task-manager.
+const USER_ID_KEY = 'active_user_id';
+const SHIFT_ID_KEY = 'active_shift_id';
+
 TaskManager.defineTask(LOCATION_TASK, async ({ data, error }) => {
   if (error) {
     console.warn('Location task error:', error);
@@ -14,8 +17,8 @@ TaskManager.defineTask(LOCATION_TASK, async ({ data, error }) => {
   const loc = locations?.[0];
   if (!loc) return;
 
-  const userId = await getStoredUserId();
-  const shiftId = await getStoredShiftId();
+  const userId = await AsyncStorage.getItem(USER_ID_KEY);
+  const shiftId = await AsyncStorage.getItem(SHIFT_ID_KEY);
   if (!userId || !shiftId) return;
 
   await supabase.from('locations').insert({
@@ -26,23 +29,16 @@ TaskManager.defineTask(LOCATION_TASK, async ({ data, error }) => {
   });
 });
 
-// Simple in-memory + module-level cache so the background task (which runs
-// outside React) can read the active user/shift without React state.
-let cachedUserId: string | null = null;
-let cachedShiftId: string | null = null;
-
-export function setActiveContext(userId: string | null, shiftId: string | null) {
-  cachedUserId = userId;
-  cachedShiftId = shiftId;
-}
-async function getStoredUserId() {
-  return cachedUserId;
-}
-async function getStoredShiftId() {
-  return cachedShiftId;
+export async function setActiveContext(userId: string | null, shiftId: string | null) {
+  if (userId && shiftId) {
+    await AsyncStorage.setItem(USER_ID_KEY, userId);
+    await AsyncStorage.setItem(SHIFT_ID_KEY, shiftId);
+  } else {
+    await AsyncStorage.removeItem(USER_ID_KEY);
+    await AsyncStorage.removeItem(SHIFT_ID_KEY);
+  }
 }
 
-/** Request permissions, then start foreground + background updates. */
 export async function startLocationTracking() {
   const fg = await Location.requestForegroundPermissionsAsync();
   if (fg.status !== 'granted') throw new Error('Foreground location permission denied');
@@ -52,8 +48,8 @@ export async function startLocationTracking() {
 
   await Location.startLocationUpdatesAsync(LOCATION_TASK, {
     accuracy: Location.Accuracy.Balanced,
-    timeInterval: 5 * 60 * 1000, // 5 minutes
-    distanceInterval: 0, // or every 50m moved
+    timeInterval: 5 * 60 * 1000,
+    distanceInterval: 0,
     foregroundService: {
       notificationTitle: 'Team Tracker',
       notificationBody: 'Sharing your location while on shift',
@@ -65,5 +61,5 @@ export async function startLocationTracking() {
 export async function stopLocationTracking() {
   const started = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK);
   if (started) await Location.stopLocationUpdatesAsync(LOCATION_TASK);
-  setActiveContext(null, null);
+  await setActiveContext(null, null);
 }
