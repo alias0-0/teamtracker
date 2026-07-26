@@ -1,13 +1,25 @@
 import type { ActiveEmployee } from '@/lib/use-employees';
 import { useReverseGeocode } from '@/lib/use-reverse-geocode';
+import type { GeofenceStatus } from '@/lib/use-geofence-alerts';
 
 interface Props {
   employees: ActiveEmployee[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  statusMap: Record<string, GeofenceStatus>;
 }
 
-function EmployeeRow({ e, selected, onSelect }: { e: ActiveEmployee; selected: boolean; onSelect: (id: string) => void }) {
+function EmployeeRow({
+  e,
+  status,
+  selected,
+  onSelect,
+}: {
+  e: ActiveEmployee;
+  status: GeofenceStatus;
+  selected: boolean;
+  onSelect: (id: string) => void;
+}) {
   const address = useReverseGeocode(e.lat, e.lng);
 
   return (
@@ -24,6 +36,9 @@ function EmployeeRow({ e, selected, onSelect }: { e: ActiveEmployee; selected: b
       <div className="mt-0.5 text-xs text-muted">
         Current location: {e.lat != null && e.lng != null ? (address ?? 'Locating…') : 'Not available'}
       </div>
+      {status === 'outside' && (
+        <div className="mt-0.5 text-xs font-semibold text-red-600">Outside assigned zone</div>
+      )}
       <div className="mt-0.5 text-xs text-muted">
         Updated {e.recorded_at ? new Date(e.recorded_at).toLocaleTimeString() : 'never'}
       </div>
@@ -31,7 +46,7 @@ function EmployeeRow({ e, selected, onSelect }: { e: ActiveEmployee; selected: b
   );
 }
 
-export function EmployeeList({ employees, selectedId, onSelect }: Props) {
+export function EmployeeList({ employees, selectedId, onSelect, statusMap }: Props) {
   if (employees.length === 0) {
     return <div className="p-4 text-sm text-muted">No employees on shift right now.</div>;
   }
@@ -39,7 +54,13 @@ export function EmployeeList({ employees, selectedId, onSelect }: Props) {
   return (
     <div className="divide-y divide-border">
       {employees.map((e) => (
-        <EmployeeRow key={e.id} e={e} selected={selectedId === e.id} onSelect={onSelect} />
+        <EmployeeRow
+          key={e.id}
+          e={e}
+          status={statusMap[e.id] ?? 'unknown'}
+          selected={selectedId === e.id}
+          onSelect={onSelect}
+        />
       ))}
     </div>
   );

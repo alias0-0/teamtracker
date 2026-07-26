@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth';
 import type { RootStackParamList } from '@/navigation';
 import { colors } from '@/theme';
 
@@ -12,6 +13,7 @@ export function LoginScreen({ navigation }: Props) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const { deactivated } = useAuth();
 
   async function submit() {
     setError('');
@@ -30,6 +32,14 @@ export function LoginScreen({ navigation }: Props) {
       <View style={styles.container}>
         <Text style={styles.title}>Team Tracker</Text>
         <Text style={styles.subtitle}>Employee</Text>
+
+        {deactivated && (
+          <View style={styles.deactivatedBanner}>
+            <Text style={styles.deactivatedBannerText}>
+              Your account has been deactivated. Contact your admin for access.
+            </Text>
+          </View>
+        )}
 
         <View style={styles.field}>
           <Text style={styles.label}>Email</Text>
@@ -66,6 +76,13 @@ const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', paddingHorizontal: 28 },
   title: { fontSize: 26, fontWeight: '700', textAlign: 'center', color: colors.fg },
   subtitle: { fontSize: 14, textAlign: 'center', color: colors.muted, marginTop: 4, marginBottom: 32 },
+  deactivatedBanner: {
+    backgroundColor: colors.danger,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 20,
+  },
+  deactivatedBannerText: { color: 'white', fontSize: 13, textAlign: 'center', fontWeight: '600' },
   field: { marginBottom: 16 },
   label: { fontSize: 13, fontWeight: '600', color: colors.fg, marginBottom: 6 },
   input: {

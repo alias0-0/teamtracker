@@ -29,7 +29,7 @@ export function useAllEmployees() {
         .select('id, name, email, mobile, dept, zone_id, active, zones(name)')
         .eq('role', 'employee')
         .order('name'),
-      supabase.from('zones').select('id, name').order('name'),
+      supabase.from('zones').select('id, name, boundary').order('name'),
     ]);
 
     if (!employeesRes.error) {
@@ -42,7 +42,7 @@ export function useAllEmployees() {
           dept: e.dept,
           zone_id: e.zone_id,
           zone_name: e.zones?.name ?? null,
-          active: e.active,
+          active: e.active ?? true,
         })),
       );
     }
@@ -65,5 +65,17 @@ export function useAllEmployees() {
     return error;
   }
 
-  return { employees, zones, loading, refresh, assignZone };
+  async function bulkAssignZone(employeeIds: string[], zoneId: string) {
+    if (employeeIds.length === 0) return null;
+    const { error } = await supabase.from('profiles').update({ zone_id: zoneId }).in('id', employeeIds);
+    if (!error) {
+      const zoneName = zones.find((z) => z.id === zoneId)?.name ?? null;
+      setEmployees((prev) =>
+        prev.map((e) => (employeeIds.includes(e.id) ? { ...e, zone_id: zoneId, zone_name: zoneName } : e)),
+      );
+    }
+    return error;
+  }
+
+  return { employees, zones, loading, refresh, assignZone, bulkAssignZone };
 }

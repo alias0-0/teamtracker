@@ -11,12 +11,14 @@ export interface Profile {
   dept: string | null;
   zone_id: string | null;
   zone_name: string | null;
+  active: boolean;
 }
 
 interface AuthContextValue {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
+  deactivated: boolean;
   refreshProfile: () => Promise<void>;
 }
 
@@ -26,14 +28,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deactivated, setDeactivated] = useState(false);
 
   async function loadProfile(userId: string) {
     const { data } = await supabase
       .from('profiles')
-      .select('id, role, name, email, mobile, dept, zone_id, zones(name)')
+      .select('id, role, name, email, mobile, dept, zone_id, active, zones(name)')
       .eq('id', userId)
       .single();
     if (!data) return setProfile(null);
+
+    const active = (data as any).active ?? true;
+    if (!active) {
+      setDeactivated(true);
+      setProfile(null);
+      await supabase.auth.signOut();
+      return;
+    }
+
+    setDeactivated(false);
     setProfile({
       ...(data as any),
       zone_name: (data as any).zones?.name ?? null,
@@ -64,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Live-updates the profile if admin changes this employee's zone while they're logged in.
+  // Live-updates the profile if admin changes this employee's zone/status while they're logged in.
   useEffect(() => {
     if (!session?.user) return;
     const channel = supabase
@@ -85,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, profile, loading, refreshProfile }}>
+    <AuthContext.Provider value={{ session, profile, loading, deactivated, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

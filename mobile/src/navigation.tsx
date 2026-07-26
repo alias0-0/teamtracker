@@ -6,6 +6,8 @@ import { LoginScreen } from '@/screens/LoginScreen';
 import { RegisterScreen } from '@/screens/RegisterScreen';
 import { HomeScreen } from '@/screens/HomeScreen';
 import { ProfileScreen } from '@/screens/ProfileScreen';
+import { ShiftHistoryScreen } from '@/screens/ShiftHistoryScreen';
+import { MessagesScreen } from '@/screens/MessagesScreen';
 import { colors } from '@/theme';
 
 export type RootStackParamList = {
@@ -13,6 +15,8 @@ export type RootStackParamList = {
   Register: undefined;
   Home: undefined;
   Profile: undefined;
+  ShiftHistory: undefined;
+  Messages: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -44,13 +48,20 @@ export function RootNavigator() {
               options={({ navigation }) => ({
                 title: 'Team Tracker',
                 headerRight: () => (
-                  <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
-                    <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>Profile</Text>
-                  </TouchableOpacity>
+                  <View style={{ flexDirection: 'row', gap: 16 }}>
+                    <TouchableOpacity onPress={() => navigation.navigate('Messages')}>
+                      <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>Messages</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+                      <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>Profile</Text>
+                    </TouchableOpacity>
+                  </View>
                 ),
               })}
             />
             <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
+            <Stack.Screen name="ShiftHistory" component={ShiftHistoryScreen} options={{ title: 'Shift History' }} />
+            <Stack.Screen name="Messages" component={MessagesScreen} options={{ title: 'Messages' }} />
           </>
         )}
       </Stack.Navigator>

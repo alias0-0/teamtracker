@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Modal, FlatList } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { supabase } from '@/lib/supabase';
 import type { RootStackParamList } from '@/navigation';
 import { colors } from '@/theme';
+import { DEPARTMENTS } from '@/constants/departments';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Register'>;
 
@@ -13,6 +14,7 @@ export function RegisterScreen({ navigation }: Props) {
   const [password, setPassword] = useState('');
   const [mobile, setMobile] = useState('');
   const [dept, setDept] = useState('');
+  const [deptPickerOpen, setDeptPickerOpen] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -20,6 +22,7 @@ export function RegisterScreen({ navigation }: Props) {
     if (!name.trim()) return 'Name is required';
     if (!/^\S+@\S+\.\S+$/.test(email)) return 'Enter a valid email';
     if (password.length < 6) return 'Password must be at least 6 characters';
+    if (!dept) return 'Select a department';
     return null;
   }
 
@@ -41,7 +44,7 @@ export function RegisterScreen({ navigation }: Props) {
       name: name.trim(),
       email,
       mobile: mobile.trim() || null,
-      dept: dept.trim() || null,
+      dept,
     });
 
     setBusy(false);
@@ -66,7 +69,11 @@ export function RegisterScreen({ navigation }: Props) {
         <TextInput style={styles.input} keyboardType="phone-pad" value={mobile} onChangeText={setMobile} />
       </Field>
       <Field label="Department">
-        <TextInput style={styles.input} value={dept} onChangeText={setDept} placeholder="e.g. HVAC, Electrical" />
+        <TouchableOpacity style={styles.input} onPress={() => setDeptPickerOpen(true)}>
+          <Text style={{ color: dept ? colors.fg : colors.muted, fontSize: 15 }}>
+            {dept || 'Select department'}
+          </Text>
+        </TouchableOpacity>
       </Field>
 
       {!!error && <Text style={styles.error}>{error}</Text>}
@@ -78,6 +85,32 @@ export function RegisterScreen({ navigation }: Props) {
       <TouchableOpacity onPress={() => navigation.navigate('Login')} style={styles.linkWrap}>
         <Text style={styles.link}>Already have an account? Log in</Text>
       </TouchableOpacity>
+
+      <Modal visible={deptPickerOpen} transparent animationType="fade">
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setDeptPickerOpen(false)}
+        >
+          <View style={styles.modalSheet}>
+            <FlatList
+              data={DEPARTMENTS}
+              keyExtractor={(item) => item}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.modalItem}
+                  onPress={() => {
+                    setDept(item);
+                    setDeptPickerOpen(false);
+                  }}
+                >
+                  <Text style={styles.modalItemText}>{item}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </ScrollView>
   );
 }
@@ -105,10 +138,15 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 15,
     color: colors.fg,
+    justifyContent: 'center',
   },
   error: { color: colors.danger, fontSize: 13, marginBottom: 12 },
   button: { backgroundColor: colors.accent, borderRadius: 8, paddingVertical: 14, alignItems: 'center', marginTop: 8 },
   buttonText: { color: 'white', fontSize: 16, fontWeight: '600' },
   linkWrap: { marginTop: 20, alignItems: 'center' },
   link: { color: colors.accent, fontSize: 13 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  modalSheet: { backgroundColor: colors.bg, borderTopLeftRadius: 16, borderTopRightRadius: 16, maxHeight: '60%', paddingVertical: 8 },
+  modalItem: { paddingVertical: 14, paddingHorizontal: 24, borderBottomWidth: 1, borderBottomColor: colors.border },
+  modalItemText: { fontSize: 16, color: colors.fg },
 });
